@@ -19,8 +19,67 @@ app = Flask(__name__)
 
 app.secret_key = server_secretkey
 
-# def refresh():
+def refresh():
+    refresh_token = session.get("refresh_token")
+    if not refresh_token:
+        return "Missing refresh token", 400
 
+    auth_options = {
+        "url" : "https://accounts.spotify.com/api/token",
+        "data" : {
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token
+        },
+        "headers": {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": "Basic " + base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()
+        }
+    }
+
+    response = requests.post(
+            auth_options["url"],
+            data = auth_options["data"],
+            headers = auth_options["headers"]
+        )
+
+    if response.status_code != 200:
+        return "Token refresh failed", 400
+
+    token_data = response.json()
+    session["access_token"] = token_data["access_token"]
+    session["refresh_token"] = token_data.get("refresh_token", refresh_token)
+    session["expires_at"] = time.time() + token_data["expires_in"]
+
+@app.route("/download")
+def download():
+    access = session.get("access_token")
+    
+    if not access:
+        return "Missing access token (start login again)", 400
+    
+    if (session.get("expires_at") < time.time():
+        refresh()
+    
+    access_token = session.get("access_token")
+    response = requests.get(
+        "https://api.spotify.com/v1/me/albums?limit=50&offset=0",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    response.raise_for_status()
+    call_result = response.json()
+    total = int(call_result["total"])
+    if (total > 0):
+        items = call_result["items"]
+        for item in items:
+            url = item["album"]["images"][0]["url"]
+
+            response = requests.get(url)
+            response.raise_for_status()
+            album_id = item["album"]["id"]
+            with open(f"{album_id}.jpg", "wb") as f:
+                f.write(response.content)
+
+    return render_template('mainpage.html')
 
 @app.route('/')
 def index():
@@ -35,14 +94,14 @@ def login():
         "response_type": "code",
         "client_id": client_id,
         "redirect_uri": redirect_uri,
-        "state": state
+        "state": state,
+        "scope": "user-library-read"
     }
     
     url = "https://accounts.spotify.com/authorize?" + urllib.parse.urlencode(params)
     return redirect(url)
 
-
-@app.route
+   
 
 @app.route("/callback")
 def callback():
