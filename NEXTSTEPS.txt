@@ -1,7 +1,6 @@
 Next Steps:
-- Add js portion to prevent button spamming
-- Make download button download to users pc not just to server (send_file or send_from_directory)
-- Add file upload button feature (occurs before the download button) with listening data so that it only downloads albums that were listened to
+- Add indication on dashboard page that you are logged in
+- Add file upload button feature (occurs before the download button) with listening data so that it only downloads albums that were listened to and can go through multiple pages of the json return value
   - A little security for this and organized folders as well (by spotify id)
   - Add SQLite implementation to store db of spotify suer ids to last time uploaded
   - Add cronjob to clear uploads from db of over 30 days

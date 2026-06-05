@@ -33,14 +33,35 @@
         .btn:active {
             transform: scale(0.98);
         }
+	.btn[style*="pointer-events: none"] {
+      	    opacity: 0.6;
+    	}
+	.btn {
+	  text-decoration: none;
+	}
     </style>
 </head>
 <body>
- <a href = "/download">
-    <button class="btn">Button 1</button>
- </a>
- <a>
-    <button class = "btn">Button 2</button>
- </a>
+
+	<a href="/download" class="btn" id="downloadbtn">Download</a>
+	
+	<script>
+	const btn = document.getElementById("downloadbtn");
+	
+	btn.addEventListener("click", (e) => {
+	  if (btn.dataset.locked === "true") {
+	    e.preventDefault();
+	    return;
+	  }
+	
+	  btn.dataset.locked = "true";
+	  btn.style.pointerEvents = "none"; // blocks spam clicks
+	
+	  setTimeout(() => {
+	    btn.dataset.locked = "false";
+	    btn.style.pointerEvents = "auto";
+	  }, 10000);
+	});
+	</script>
 </body>
 </html>

@@ -6,6 +6,9 @@ import urllib.parse
 import requests
 import base64
 import time
+import io
+import zipfile
+from flask import send_file
 
 load_dotenv()
 
@@ -53,11 +56,9 @@ def refresh():
 @app.route("/download")
 def download():
     access = session.get("access_token")
-    
     if not access:
         return "Missing access token (start login again)", 400
-    
-    if (session.get("expires_at") < time.time():
+    if (session.get("expires_at") < time.time()):
         refresh()
     
     access_token = session.get("access_token")
@@ -68,18 +69,29 @@ def download():
     response.raise_for_status()
     call_result = response.json()
     total = int(call_result["total"])
-    if (total > 0):
-        items = call_result["items"]
-        for item in items:
-            url = item["album"]["images"][0]["url"]
 
-            response = requests.get(url)
-            response.raise_for_status()
-            album_id = item["album"]["id"]
-            with open(f"{album_id}.jpg", "wb") as f:
-                f.write(response.content)
+    buf = io.BytesIO()
 
-    return render_template('mainpage.html')
+    with zipfile.ZipFile(buf,'w') as zf:
+
+        if (total > 0):
+            items = call_result["items"]
+            for item in items:
+                url = item["album"]["images"][0]["url"]
+
+                response = requests.get(url)
+                response.raise_for_status()
+                album_name = item["album"]["name"].replace("/","_") # replace /  with _ to avoid directories
+                zf.writestr(f"{album_name}.jpg", response.content)
+
+    buf.seek(0) #rewinds buffer to start so returns properly
+    return send_file(buf,as_attachment=True,download_name='albums.zip',mimetype='application/zip')
+
+
+@app.route('/done')
+def done():
+    return render_template('donepage.html')
+
 
 @app.route('/')
 def index():
