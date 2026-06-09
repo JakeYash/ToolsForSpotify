@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #212121; 
+            font-family: Arial, sans-serif;
+        }
+
+        .btn {
+            background-color: #1DB954;
+            color: black;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+	.btn[style*="pointer-events: none"] {
+      	    opacity: 0.6;
+    	}
+	.btn {
+	  text-decoration: none;
+	}
+    </style>
+</head>
+<body>
+
+	<a href="/upload" class="btn" id="downloadbtn">Upload</a>
+	
+	<script>
+	const btn = document.getElementById("downloadbtn");
+	
+	btn.addEventListener("click", (e) => {
+	  if (btn.dataset.locked === "true") {
+	    e.preventDefault();
+	    return;
+	  }
+	
+	  btn.dataset.locked = "true";
+	  btn.style.pointerEvents = "none"; // blocks spam clicks
+	
+	  setTimeout(() => {
+	    btn.dataset.locked = "false";
+	    btn.style.pointerEvents = "auto";
+	  }, 10000);
+	});
+	</script>
+</body>
+</html>
+
