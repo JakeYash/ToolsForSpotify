@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard</title>
+    <title>Ask For Upload</title>
+
     <style>
         body {
             margin: 0;
@@ -23,6 +24,8 @@
             border-radius: 8px;
             cursor: pointer;
             transition: transform 0.1s ease, box-shadow 0.1s ease;
+            text-decoration: none;
+            display: inline-block;
         }
 
         .btn:hover {
@@ -33,36 +36,50 @@
         .btn:active {
             transform: scale(0.98);
         }
-	.btn[style*="pointer-events: none"] {
-      	    opacity: 0.6;
-    	}
-	.btn {
-	  text-decoration: none;
-	}
     </style>
 </head>
+
 <body>
 
-	<a href="/upload" class="btn" id="downloadbtn">Upload</a>
-	
-	<script>
-	const btn = document.getElementById("downloadbtn");
-	
-	btn.addEventListener("click", (e) => {
-	  if (btn.dataset.locked === "true") {
-	    e.preventDefault();
-	    return;
-	  }
-	
-	  btn.dataset.locked = "true";
-	  btn.style.pointerEvents = "none"; // blocks spam clicks
-	
-	  setTimeout(() => {
-	    btn.dataset.locked = "false";
-	    btn.style.pointerEvents = "auto";
-	  }, 10000);
-	});
-	</script>
+    <input
+        type="file"
+        id="fileInput"
+        accept=".json,application/json"
+        multiple
+        hidden
+    >
+
+    <button class="btn" id="uploadBtn">Upload</button>
+
+    <script>
+        const btn = document.getElementById("uploadBtn");
+        const fileInput = document.getElementById("fileInput");
+
+        btn.addEventListener("click", () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener("change", async () => {
+            if (!fileInput.files.length) return;
+
+            const formData = new FormData();
+
+            for (const file of fileInput.files) {
+                formData.append("files", file);
+            }
+
+            try {
+                await fetch("/upload", {
+                    method: "POST",
+                    body: formData
+                });
+            } catch (err) {
+                console.error("Upload failed:", err);
+            }
+
+            fileInput.value = "";
+        });
+    </script>
+
 </body>
 </html>
-

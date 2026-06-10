@@ -16,14 +16,32 @@ def register_routes(app):
     redirect_uri = app.config["REDIRECT_URI"]
     upload_folder = app.config["UPLOAD_FOLDER"]
 
-    @app.route("/upload")
+    @app.route("/upload", methods=[)
     def upload():
+        access = session.get("access_token")
+        if not access:
+            return "Missing access token (start login again)", 400
+        if (session.get("expires_at") < time.time()):
+            refresh()
+        
+        access_token = session.get("access_token")
+        response = requests.get(
+            "https://api.spotify.com/v1/me/",
+            headers={"Authorization": f"Bearer {access_token}"}
+        )
+        response.raise_for_status()
+        call_result = response.json()
+        account_id = call_result["account_id"]
+        session["account_id"] = account_id
+
         files = request.files.getlist('files')
-        saved = []
+        
+        folder = os.path.join(upload_folder, account_id)
+        os.mkdir(folder)
+        
         for file in files:
             filename = secure_filename(file.filename)
-            file.save(os.path.join(upload_folder, filename))
-            saved.append(filename)
+            file.save(os.path.join(folder, filename))
         
         session["uploaded"] = True
         return render_template("dashboard.html")
@@ -34,9 +52,13 @@ def register_routes(app):
         access = session.get("access_token")
         if not access:
             return "Missing access token (start login again)", 400
+        
+        if !(session.get("uploaded")):
+            return "Need upload for download", 400
+
         if (session.get("expires_at") < time.time()):
             refresh()
-        
+       
         access_token = session.get("access_token")
         response = requests.get(
             "https://api.spotify.com/v1/me/albums?limit=50&offset=0",
@@ -48,17 +70,29 @@ def register_routes(app):
     
         buf = io.BytesIO()
     
+        # look at uploads folder under account_id
+        # for json file: result = file.json 
+        # uriset = {r['spotify_track_uri'] for r in jsonresult if r.get('spotify_track_uri')}
+        # total_set |= uri_set
+
         with zipfile.ZipFile(buf,'w') as zf:
-    
+            # make this go for multiple pages, nest it with while(true) and have block that requests again if call_result[next] exists
+            # and redefines call_result
             if (total > 0):
                 items = call_result["items"]
                 for item in items:
                     url = item["album"]["images"][0]["url"]
-    
+                    # tracklist = item["album"]["tracks"][items]
+                    # flag = True
+                    # for track in tracklist: if(track["id"] is in total_set): continue else: flag = False break
+                    # nest the below under an if (flag)
                     response = requests.get(url)
                     response.raise_for_status()
                     album_name = item["album"]["name"].replace("/","_") # replace /  with _ to avoid directories
                     zf.writestr(f"{album_name}.jpg", response.content)
+                    # also add album to list of albums to remove
+
+        #write helper function that removes albums based on list (in batches of 40), and call it after all this with list of albums
     
         buf.seek(0) #rewinds buffer to start so returns properly
         return send_file(buf,as_attachment=True,download_name='albums.zip',mimetype='application/zip')
