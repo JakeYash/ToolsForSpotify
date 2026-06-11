@@ -17,4 +17,5 @@ os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok = True)
 
 app.secret_key = app.config["SECRET_KEY"]
 
+
 register_routes(app)

@@ -69,10 +69,13 @@
             }
 
             try {
-                await fetch("/upload", {
-                    method: "POST",
-                    body: formData
-                });
+                const res = await fetch("/upload", {
+    			method: "POST",
+    			body: formData
+		});
+		if (res.ok) {
+    			window.location.href = '/dashboard';
+		}
             } catch (err) {
                 console.error("Upload failed:", err);
             }

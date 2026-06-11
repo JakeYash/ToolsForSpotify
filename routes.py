@@ -6,8 +6,9 @@ import io
 import zipfile
 from flask import Flask, render_template, session, request, redirect, send_file
 import secrets
-from helpers import refresh
-
+from helpers import refresh, retrieve_set_from_cache, insert_files_into_cache
+from redis_client import r
+import re
 
 def register_routes(app):    
 
@@ -16,7 +17,7 @@ def register_routes(app):
     redirect_uri = app.config["REDIRECT_URI"]
     upload_folder = app.config["UPLOAD_FOLDER"]
 
-    @app.route("/upload", methods=[)
+    @app.route("/upload", methods=["POST"])
     def upload():
         access = session.get("access_token")
         if not access:
@@ -35,16 +36,14 @@ def register_routes(app):
         session["account_id"] = account_id
 
         files = request.files.getlist('files')
+                # redis only stores strings/bytes, need to make set into list to make json serializable
+        # then can store, but will have to unserialize and then setify whenever retrieving
         
-        folder = os.path.join(upload_folder, account_id)
-        os.mkdir(folder)
+        insert_files_into_cache(files,account_id)
         
-        for file in files:
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(folder, filename))
-        
+
         session["uploaded"] = True
-        return render_template("dashboard.html")
+        return '', 200
 
 
     @app.route("/download")
@@ -53,7 +52,7 @@ def register_routes(app):
         if not access:
             return "Missing access token (start login again)", 400
         
-        if !(session.get("uploaded")):
+        if not (session.get("uploaded")):
             return "Need upload for download", 400
 
         if (session.get("expires_at") < time.time()):
@@ -70,28 +69,35 @@ def register_routes(app):
     
         buf = io.BytesIO()
     
-        # look at uploads folder under account_id
-        # for json file: result = file.json 
-        # uriset = {r['spotify_track_uri'] for r in jsonresult if r.get('spotify_track_uri')}
-        # total_set |= uri_set
+        account_id = session["account_id"]
+        track_set = retrieve_set_from_cache(account_id)
 
         with zipfile.ZipFile(buf,'w') as zf:
             # make this go for multiple pages, nest it with while(true) and have block that requests again if call_result[next] exists
             # and redefines call_result
+            
             if (total > 0):
                 items = call_result["items"]
                 for item in items:
+                    print(item["album"]["name"])
+                for item in items:
                     url = item["album"]["images"][0]["url"]
-                    # tracklist = item["album"]["tracks"][items]
-                    # flag = True
-                    # for track in tracklist: if(track["id"] is in total_set): continue else: flag = False break
-                    # nest the below under an if (flag)
-                    response = requests.get(url)
-                    response.raise_for_status()
-                    album_name = item["album"]["name"].replace("/","_") # replace /  with _ to avoid directories
-                    zf.writestr(f"{album_name}.jpg", response.content)
-                    # also add album to list of albums to remove
+                    trackList = item["album"]["tracks"]["items"]
+                    flag = True
+                    for track in trackList: 
+                        if(track["id"] in track_set): 
+                            continue 
+                        else: 
+                            flag = False 
+                            break
 
+                    if (flag):
+                        response = requests.get(url)
+                        response.raise_for_status()
+                        album_name = re.sub(r'[/*]', '_', item["album"]["name"])
+                        zf.writestr(f"{album_name}.jpg", response.content)
+                        # also add album to list of albums to remove later
+ 
         #write helper function that removes albums based on list (in batches of 40), and call it after all this with list of albums
     
         buf.seek(0) #rewinds buffer to start so returns properly

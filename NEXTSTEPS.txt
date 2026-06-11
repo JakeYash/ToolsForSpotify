@@ -1,7 +1,5 @@
 Next Steps:
-- Add file upload button feature (occurs before the download button) with listening data so that it only downloads albums that were listened to and can go through multiple pages of the json return value (will need js to open file picker or style old school html form, might try that)
-  - A little security for this and organized folders as well (by spotify id)
-  - Add SQLite implementation to store db of spotify user ids to last time uploaded
-  - Add cronjob to clear uploads from db of over 30 days
-- Add indication on dashboard page that you are logged in
+- Add paged traversal for saved albums (have more than 50)
+- Security checks
+- Pretty up, add indication on dashboard page that you are logged in
 - Add removal from library after downloading (at the very end)
