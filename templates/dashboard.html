@@ -39,12 +39,16 @@
 	.btn {
 	  text-decoration: none;
 	}
+	.spacer {
+            height: 25vh;
+        }
     </style>
 </head>
 <body>
 
-	<a href="/download" class="btn" id="downloadbtn">Download</a>
-	
+    	<a href="/download" class="btn" id="downloadbtn" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">Download</a>
+    	<a href="/done" class="btn" style="position: absolute; top: calc(50% + 250px); left: 50%; transform: translateX(-50%);">Done!</a>
+
 	<script>
 	const btn = document.getElementById("downloadbtn");
 	

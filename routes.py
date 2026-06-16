@@ -76,27 +76,44 @@ def register_routes(app):
             # make this go for multiple pages, nest it with while(true) and have block that requests again if call_result[next] exists
             # and redefines call_result
             
-            if (total > 0):
+            while (total > 0):
                 items = call_result["items"]
-                for item in items:
-                    print(item["album"]["name"])
+                
                 for item in items:
                     url = item["album"]["images"][0]["url"]
                     trackList = item["album"]["tracks"]["items"]
-                    flag = True
+                    flag = 2 # small 1 song buffer to allow for one skipped song (just in case of accidents)
+                    print(item["album"]["name"])
                     for track in trackList: 
                         if(track["id"] in track_set): 
                             continue 
                         else: 
-                            flag = False 
-                            break
+                            flag = flag - 1 
+                            if (flag == 0):
+                                break
 
                     if (flag):
                         response = requests.get(url)
                         response.raise_for_status()
-                        album_name = re.sub(r'[/*]', '_', item["album"]["name"])
+                        album_name = re.sub(r'[/*\\:?"<>| \.$!@&]', '_', item["album"]["name"])
+                        print(album_name, "added.")
                         zf.writestr(f"{album_name}.jpg", response.content)
                         # also add album to list of albums to remove later
+                if (call_result["next"]):
+                    if (session.get("expires_at") < time.time()):
+                        refresh()
+       
+                    access_token = session.get("access_token")
+                    response = requests.get(
+                        call_result["next"],
+                        headers={"Authorization": f"Bearer {access_token}"}
+                    )
+                    response.raise_for_status()
+                    call_result = response.json()
+                    total = int(call_result["total"])
+                else:
+                    total = 0
+
  
         #write helper function that removes albums based on list (in batches of 40), and call it after all this with list of albums
     
@@ -106,8 +123,7 @@ def register_routes(app):
     
     @app.route('/done')
     def done():
-        return render_template('donepage.html')
-    
+        return redirect("https://github.com/JakeYash/ToolsForSpotify")
     
     @app.route('/')
     def index():
