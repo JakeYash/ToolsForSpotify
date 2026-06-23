@@ -45,26 +45,27 @@
     </style>
 </head>
 <body>
-
-    	<a href="/download" class="btn" id="downloadbtn" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">Download</a>
-    	<a href="/done" class="btn" style="position: absolute; top: calc(50% + 250px); left: 50%; transform: translateX(-50%);">Done!</a>
+	<a href="/download" class="btn" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">Download</a>
+    	<a href="/done" class="btn" style="position: absolute; top: calc(50% + 250px); left: 50%; transform: translateX(-50%);">Done! (Delete from spotify library)</a>
 
 	<script>
-	const btn = document.getElementById("downloadbtn");
-	
-	btn.addEventListener("click", (e) => {
-	  if (btn.dataset.locked === "true") {
-	    e.preventDefault();
-	    return;
-	  }
-	
-	  btn.dataset.locked = "true";
-	  btn.style.pointerEvents = "none"; // blocks spam clicks
-	
-	  setTimeout(() => {
-	    btn.dataset.locked = "false";
-	    btn.style.pointerEvents = "auto";
-	  }, 10000);
+	const buttons = document.querySelectorAll(".btn");
+
+	buttons.forEach(btn => {
+	  btn.addEventListener("click", (e) => {
+	    if (btn.dataset.locked === "true") {
+	      e.preventDefault();
+	      return;
+	    }
+
+	    btn.dataset.locked = "true";
+	    btn.style.pointerEvents = "none";
+
+	    setTimeout(() => {
+	      btn.dataset.locked = "false";
+	      btn.style.pointerEvents = "auto";
+	    }, 10000);
+	  });
 	});
 	</script>
 </body>

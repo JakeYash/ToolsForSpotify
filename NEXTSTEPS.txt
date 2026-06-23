@@ -1,5 +1,0 @@
-Next Steps:
-- Add paged traversal for saved albums (have more than 50)
-- Security checks
-- Pretty up, add indication on dashboard page that you are logged in
-- Add removal from library after downloading (at the very end)
